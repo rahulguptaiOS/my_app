@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:my_app/Constants/AppStrings.dart';
-import 'package:my_app/Entity/Mpins.dart';
-import 'package:my_app/Storage/PreferenceManager.dart';
+import 'package:my_app/Presentation/cubits/Base/BaseCubit.dart';
+import 'package:my_app/Presentation/cubits/States/ValidateMpinState.dart';
+import 'package:my_app/Utils/AppStrings.dart';
+import 'package:my_app/Data/Datasource/Storage/StorageRepositoryImpl.dart';
+
+import '../../Domain/Models/Mpins.dart';
 
 
-class MpinRepositoryImpl extends ChangeNotifier {
+class StoreCubit extends BaseCubit<ValidateMpinState> {
   String _mpin = '';
   String _confirmMpin = '';
   String _error = '';
@@ -13,6 +15,8 @@ class MpinRepositoryImpl extends ChangeNotifier {
   bool _isConfirmPinError = false;
   bool _isButtonDisable = true;
 
+  StoreCubit(this._storageRepositoryImpl) : super(const ValidateMpinStateSuccess("", "", "", "", false, false, true));
+
   String get mpin => _mpin;
   String get confirmMpin => _confirmMpin;
   String get error => _error;
@@ -20,7 +24,7 @@ class MpinRepositoryImpl extends ChangeNotifier {
   bool get isMPinError => _isMPinError;
   bool get isConfirmPinError => _isConfirmPinError;
   bool get isButtonDisable => _isButtonDisable;
-  late PreferenceManager preferenceManager = PreferenceManager();
+  final StorageRepositoryImpl _storageRepositoryImpl;
 
   void setMPIN(String value) {
     print(value);
@@ -29,18 +33,30 @@ class MpinRepositoryImpl extends ChangeNotifier {
     _validateConfirmMPIN();
     validateForDuplicate(value);
     _isButtonDisable = _mpin.length < 4 ? true : _isMPinError || _isConfirmPinError;
-    notifyListeners();
+    emit(ValidateMpinStateSuccess(_mpin,
+        _confirmMpin,
+        _error,
+        _confirmMpinError,
+        _isMPinError,
+        _isConfirmPinError,
+        _isButtonDisable));
   }
 
   void setConfirmMPIN(String value) {
     _confirmMpin = value;
     _validateConfirmMPIN();
     _isButtonDisable = _confirmMpin.length < 4 ? true : _isMPinError || _isConfirmPinError;
-    notifyListeners();
+    emit(ValidateMpinStateSuccess(_mpin,
+        _confirmMpin,
+        _error,
+        _confirmMpinError,
+        _isMPinError,
+        _isConfirmPinError,
+        _isButtonDisable));
   }
 
   void validateForDuplicate(String value) async {
-    var pins = await preferenceManager.loadPins();
+    var pins = await _storageRepositoryImpl.loadPins();
     pins.sort((a, b) => b.time.compareTo(a.time));
     List<Mpin> recentPins = pins.take(3).toList();
     Mpin? pinWithValue = recentPins.firstWhere((pin) => pin.pin == value, orElse: (){
@@ -49,18 +65,30 @@ class MpinRepositoryImpl extends ChangeNotifier {
     if(pinWithValue.pin.isEmpty == false){
       _error = AppStrings.pinErrorMessage;
       _isMPinError = true;
-      notifyListeners();
+      emit(ValidateMpinStateSuccess(_mpin,
+          _confirmMpin,
+          _error,
+          _confirmMpinError,
+          _isMPinError,
+          _isConfirmPinError,
+          _isButtonDisable));
     }
   }
 
   void saveMpin(String value) async {
     var mpin = Mpin(time: DateTime.now(), pin: value);
-    preferenceManager.savePin(mpin)
+    _storageRepositoryImpl.savePin(mpin)
         .then((value) {
       print("Saving");
       _mpin = "";
       _confirmMpin = "";
-      notifyListeners();
+      emit(SaveMpinStateSuccess(_mpin,
+          _confirmMpin,
+          _error,
+          _confirmMpinError,
+          _isMPinError,
+          _isConfirmPinError,
+          _isButtonDisable));
     });
   }
 

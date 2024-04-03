@@ -1,17 +1,12 @@
 import 'dart:convert';
 
-import 'package:my_app/Entity/Mpins.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class PreferenceManager {
-  Future<void> savePin(Mpin pin) async {
-    List<Mpin> loadedMpins = await loadPins();
-    loadedMpins.add(pin);
-    List<Map<String, dynamic>> mpinJsonList = loadedMpins.map((pin) => pin.toJson()).toList();
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('mpinList', jsonEncode(mpinJsonList));
-  }
+import '../../../../Domain/Models/Mpins.dart';
 
+abstract class BaseStorageRepository {
+  @protected
   Future<List<Mpin>> loadPins() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? userListJson = prefs.getString('mpinList');
@@ -22,5 +17,4 @@ class PreferenceManager {
       return [];
     }
   }
-
 }

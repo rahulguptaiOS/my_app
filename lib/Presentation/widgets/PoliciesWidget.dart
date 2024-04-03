@@ -19,7 +19,7 @@ class PoliciesWidget extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding:  EdgeInsets.only(top: 3),
+              padding:  const EdgeInsets.only(top: 3),
               child: Container(
                 height: 8,
                 width: 8,
